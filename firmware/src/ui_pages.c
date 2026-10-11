@@ -310,6 +310,21 @@ static void pv_column(uint32_t c, const char *label0, const char *val0, const ch
 /* the sound being edited: its engine (the track's colour), its name */
 static void pv_sound(void)
 {
+    if (pv_kind() == PV_NOTES || pv_kind() == PV_GRID) {
+        int live = live_rec_sel(), erase = seq_erase_active(TSEL);
+        uint32_t hs = 0x48504c50u + pv_kind() * 7u + (uint32_t)live * 31u + (uint32_t)erase * 131u + ux.gen * 977u + ux.pal * 31u;
+        if (!ui.force && hs == pv.sound) return;
+        pv.sound = hs;
+        cv_begin(240, 240 - PV_SOUND_Y, T_BG);
+        if (live) {
+            cv_text_on(8, 3, &AF_X, erase ? "RELEASE EDIT: STOP ERASING" : "HOLD EDIT: ERASE WHILE RECORDING", T_THEME, T_BG);
+        } else {
+            cv_text_on(8, 3, &AF_X, pv_kind() == PV_GRID ? "EDIT: CLEAR STEP" : "EDIT: DELETE NOTE", T_TEXT, T_BG);
+            cv_text_r(232, 3, &AF_X, "HOLD OCT+: CLEAR MENU", T_MID, T_BG);
+        }
+        cv_blit(0, PV_SOUND_Y);
+        return;
+    }
     char nm[20];
     const char *en = ENGINES[eng_idx(TSEL->eng_req)]->name;
     uint32_t sig;

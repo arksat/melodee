@@ -827,7 +827,16 @@ static void edit_param(uint32_t slot, int32_t steps)
     d = page_desc(pg, slot, &vp);
     if (!d || !vp || d->max == d->min)
         return;
-    v = enum_step(d, *vp, clamp(*vp + accel(EN_K1 + slot, steps, desc_range(d)), d->min, d->max));
+    if (pg->graph == GR_STEPS && slot == 0u && pg->id[0] == P_SLEN &&
+        (fm1_in.buttons & (1u << panel.btn[B_HOME]))) {
+        /* HOME is shift here: one detent per 16-step length, no acceleration.
+         * From an intermediate length, choose the next boundary in the turn's direction. */
+        int32_t block = steps > 0 ? *vp / 16 : (*vp + 15) / 16;
+        v = clamp((block + steps) * 16, 16, 64);
+        ui.home_t0 |= 2u;                              /* consume HOME release after the shifted turn */
+    } else {
+        v = enum_step(d, *vp, clamp(*vp + accel(EN_K1 + slot, steps, desc_range(d)), d->min, d->max));
+    }
     *vp = (int16_t)v;
     if(pg->scope==SC_P5){
         uint8_t old[MO_NATIVE_N];uint32_t f=motion_guard();
@@ -1492,7 +1501,9 @@ static void ui_input(void)
         momentary.active=momentary.count=momentary.native=0;pressed&=~(1u<<panel.btn[B_OCTUP]);ui_message("KEPT");
     }
     uint32_t bank_notes = notes;
-    uint32_t home = btn_hold(&ui.home_t0, B_HOME, now, 1);
+    int pattern_shift = !ui.home && !ui.menu && !ui.confirm && !name_on() && !pop.on && !ui.ly &&
+                        cur_page()->graph == GR_STEPS && cur_page()->id[0] == P_SLEN;
+    uint32_t home = btn_hold(&ui.home_t0, B_HOME, now, !pattern_shift);
     uint32_t rec = btn_hold(&ui.rec_t0, B_REC, now, !ui.menu && !ui.confirm && !name_on());   /* held: MIXER */
     uint32_t seq = btn_hold(&ui.seq_t0, B_SEQ, now, !ui.menu && !ui.confirm);
     uint32_t save = btn_hold(&ui.save_t0, B_SAVE, now, !ui.menu && !ui.confirm);   /* held: UNDO (ui.c undo_swap) */
@@ -1934,9 +1945,14 @@ static void ui_input(void)
         fm6_opsel = (uint8_t)clamp((int32_t)fm6_opsel + (s > 0 ? 1 : -1), 0, 5);
         ui.force = 1;
     }
-    if ((s = panel_enc(EN_ALGO)) != 0) {           /* ALGORITHM: the selected track, on every page */
+    if ((s = panel_enc(EN_ALGO)) != 0) {           /* Browser: category/list; elsewhere: selected track. */
         step_edit_combo();
-        track_select((uint32_t)clamp((int32_t)song.sel + (s > 0 ? 1 : -1), 0, NTRK - 1));
+        if (!ui.home && cur_page()->graph == GR_BROWSE) {
+            /* Same list selection as KNOB 1 (ALL, FAV, RECENT, categories). */
+            edit_param(0, s);
+        } else {
+            track_select((uint32_t)clamp((int32_t)song.sel + (s > 0 ? 1 : -1), 0, NTRK - 1));
+        }
     }
     if ((s = panel_enc(EN_SELECT)) != 0) {          /* SELECT: pages; with SEQ / a step key / ENV / SCL: below */
         step_edit_combo();

@@ -17,8 +17,21 @@ int main(void)
     turn(EN_K2, 1);
     failed |= same_sound(TSEL, &before);
 
+    /* ALGORITHM filters the browser list without switching tracks. */
+    before = *TSEL;
+    list_set(LM_CAT);
+    turn(EN_ALGO, 1);
+    failed |= song.sel != 0 || list_mode() != LM_CAT + 1 || !same_sound(TSEL, &before);
+    turn(EN_ALGO, -1);
+    failed |= song.sel != 0 || list_mode() != LM_CAT;
+    list_set(LM_ALL);
+    turn(EN_PRESET, 1);
+    failed |= same_sound(TSEL, &before);
+
     press(B_OCTUP);
     failed |= !ui.home;
+    turn(EN_ALGO, 1);
+    failed |= song.sel != 1; /* Stage retains track selection. */
 
     printf("stage PRESETS: %s\n", failed ? "FAILED" : "passed");
     return failed;

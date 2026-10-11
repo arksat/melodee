@@ -1,0 +1,71 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Melodee 実機へ書き込み</title>
+<style>
+body{font:16px/1.7 system-ui,sans-serif;background:#151515;color:#eee;margin:0}
+main{max-width:580px;margin:40px auto;padding:0 24px}a{color:#a9d5ff}
+button{font:inherit;padding:12px 22px;border:0;border-radius:6px;cursor:pointer}button:disabled{opacity:.4}
+progress{width:100%}pre{white-space:pre-wrap;font-size:12px;color:#aaa}
+</style><main>
+<h1>Melodee 実機へ書き込み</h1>
+<p>FM-1をUSBデータケーブルでパソコンに直接接続し、Chrome／Edgeで開いてください。</p>
+<p>今回のカスタムファームウェアを書き込みます。Web Player内の音色・パターンは転送されません。必要な実機データは事前にバックアップしてください。この画面は自動バックアップを行いません。</p>
+<p>書き込み中はUSBを抜かず、このページを閉じないでください。</p>
+<p id="package">ファームウェア確認中…</p>
+<button id="install" disabled>FM-1へ書き込み</button>
+<p id="status" role="status" aria-live="polite"></p>
+<progress id="progress" max="100" value="0"></progress>
+<pre id="log"></pre>
+<p><a href="../">Web Playerに戻る</a> · <a href="firmware.fwsc">ファームウェアを保存</a></p>
+<p><a href="https://github.com/arksat/melodee">Source</a> · <a href="LICENSE">GPL-3.0</a> · <a href="LICENSING.md">その他のライセンス</a></p>
+</main>
+<script type="module">
+import { productOf, logicalImage } from './fm1pkg.js';
+import { Updater } from './fm1ota.js';
+const meta = {"product": "FM-1_91010", "sha256": "b7bae04b440d1d27b27cd1004829c93a824aefd681d04bef6800501d26d0604d"};
+const $ = id => document.getElementById(id);
+let image, writing = false;
+const errors = {notfound:'FM-1が見つかりません。USBケーブルを確認し、MIDIを使う他のアプリを閉じてください。',model:'接続機器は対応するFM-1ではありません。',lost:'USB接続が切れました。挿し直して再試行してください。',noloader:'書き込みモードのFM-1が見つかりません。USBを挿し直して再試行してください。',noreturn:'FM-1が再接続されませんでした。電源を入れ直して確認してください。',mismatch:'書き込み後のバージョン確認に失敗しました。'};
+const log = s => { $('log').textContent += s + '\n'; };
+async function load() {
+  try {
+    if (!navigator.requestMIDIAccess) throw Error('Chrome／Edgeで開いてください。このブラウザはWeb MIDIに対応していません。');
+    const r = await fetch('firmware.fwsc', {cache:'no-store'});
+    if (!r.ok) throw Error('ファームウェアを読み込めません。');
+    const bytes = new Uint8Array(await r.arrayBuffer());
+    const sha = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2,'0')).join('');
+    if (sha !== meta.sha256 || productOf(bytes) !== meta.product) throw Error('ファームウェアの検証に失敗しました。書き込みはできません。');
+    image = logicalImage(bytes);
+    $('package').textContent = `カスタムUI版 / ${meta.product} / ${bytes.length.toLocaleString()} bytes`;
+    $('install').disabled = false;
+  } catch(e) { $('status').textContent = e.message; }
+}
+window.addEventListener('beforeunload', e => { if(writing) {e.preventDefault();e.returnValue='書き込み中です';} });
+$('install').addEventListener('click', async () => {
+  if(writing || !image) return;
+  if(!confirm('FM-1へカスタムファームウェアを書き込みます。USBを抜かず、完了までページを開いておいてください。開始しますか？')) return;
+  writing = true; $('install').disabled = true;
+  $('log').textContent = ''; $('progress').value = 0;
+  try {
+    const midi = await navigator.requestMIDIAccess({sysex:true});
+    const up = new Updater(midi, log);
+    const labels = {start:'開始',verify:'確認中',loader:'書き込みモードへ切替中',write:'書き込み中',reboot:'再起動・接続確認中',done:'書き込み完了'};
+    const step = (k,n) => {
+      $('status').textContent = labels[k] || k;
+      if(k === 'verify') $('progress').value = n / 1241 * 100;
+      if(k === 'write') $('progress').value = (74 + n) / 1241 * 100;
+      if(k === 'done') $('progress').value = 100;
+    };
+    const ota = await up.find(id => id.model === 'ota-FM-1');
+    if(ota) {
+      ota.link.close();
+      if(!await up.resume(image, step, meta.product)) throw Error('転送が中断しました。USBを挿し直して再試行してください。');
+    } else await up.install(image, meta.product, step);
+  } catch(e) {
+    $('status').textContent = e.name === 'NotAllowedError' ? 'MIDI（SysEx）のアクセスを許可して再試行してください。' : errors[e.code] || e.message;
+    log(String(e));
+  } finally {writing=false;$('install').disabled=false;}
+});
+load();
+</script></html>

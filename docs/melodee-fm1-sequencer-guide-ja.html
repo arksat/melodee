@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Melodee / M-VAVE FM-1 — シーケンサー操作早見表</title>
+  <style>
+    :root { color-scheme: dark; --bg:#111318; --panel:#1a1e26; --ink:#f2f4f8; --muted:#b7bfcc; --line:#343b49; --accent:#7bdcff; --key:#ffd166; --danger:#ff8a8a; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.65 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif; }
+    main { max-width:760px; margin:auto; padding:24px 16px 64px; }
+    h1 { font-size:1.75rem; line-height:1.25; margin:0 0 .4rem; }
+    h2 { font-size:1.3rem; margin:2.2rem 0 .6rem; padding-top:.3rem; border-bottom:1px solid var(--line); }
+    h3 { font-size:1.05rem; margin:1.45rem 0 .35rem; }
+    p, ul, ol { margin:.45rem 0 1rem; }
+    li { margin:.32rem 0; }
+    .lead, .small { color:var(--muted); }
+    .small { font-size:.87rem; }
+    nav { display:flex; flex-wrap:wrap; gap:.45rem; margin:1rem 0 1.5rem; }
+    nav a { color:var(--accent); text-decoration:none; border:1px solid var(--line); border-radius:99px; padding:.25rem .65rem; font-size:.88rem; }
+    .card, .tip, .warning { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:13px 15px; margin:1rem 0; }
+    .tip { border-left:4px solid var(--accent); }
+    .warning { border-left:4px solid var(--danger); }
+    kbd { display:inline-block; border:1px solid #677080; border-bottom-width:3px; border-radius:5px; padding:.04em .38em; font:700 .9em ui-monospace,SFMono-Regular,monospace; color:var(--key); white-space:nowrap; }
+    table { width:100%; border-collapse:collapse; margin:.7rem 0 1rem; }
+    th,td { text-align:left; vertical-align:top; padding:.58rem .35rem; border-bottom:1px solid var(--line); }
+    th { color:var(--muted); font-size:.86rem; }
+    a { color:var(--accent); }
+    @media print { body { background:white; color:#111; } .card,.tip,.warning { background:white; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Melodee / M-VAVE FM-1<br>シーケンサー操作早見表</h1>
+  <p class="lead">Melodee 1.1.0 向け。ブラウザを閉じても読める単一ファイル版です。</p>
+  <nav><a href="#notes">ノート編集</a><a href="#record">録音</a><a href="#patterns">パターン</a><a href="#song">ソング</a><a href="#sound">音色選択</a><a href="#undo">取り消し</a></nav>
+
+  <div class="tip"><strong>いちばん大事：</strong>ノート編集は <kbd>SEQ</kbd> → <strong>NOTES</strong>。消したいノートを <kbd>KNOB 1</kbd> で選び、<kbd>EDIT</kbd> を短く押します。</div>
+
+  <h2 id="notes">ノート編集：SEQ → NOTES</h2>
+  <p><kbd>SEQ</kbd> を押して NOTES ページを開きます。もう一度押すと PATTERNS、TEMPO などのシーケンサー・ページへ移ります。ピアノロール上の明るい枠が選択ノート、縦の動く線が再生位置です。</p>
+  <table><thead><tr><th>操作</th><th>結果</th></tr></thead><tbody>
+    <tr><td><kbd>KNOB 1</kbd> STEP</td><td>ノート／空ステップを前後に選択。コードは各ピッチを個別に選べます。</td></tr>
+    <tr><td><kbd>KNOB 2</kbd> PITCH</td><td>選択ノートの音程を変更。空の手入力ステップではノートを追加します。</td></tr>
+    <tr><td>鍵盤または MIDI</td><td>空のステップにノート／コードを入力。演奏録音では通常どおり録音します。</td></tr>
+    <tr><td><kbd>KNOB 3</kbd> LENGTH</td><td>ノート長を変更。<kbd>ENV</kbd> を押しながら回すと 1/16 ステップ単位で微調整。</td></tr>
+    <tr><td><kbd>KNOB 4</kbd> VEL</td><td>ベロシティを 1〜127 に変更。<kbd>ENV</kbd>＋KNOB 4 で手入力ノートの Slide を切替。</td></tr>
+    <tr><td><kbd>PRESETS</kbd></td><td>選択位置の表示倍率を 16 ステップ〜1ステップに変更。</td></tr>
+    <tr><td><kbd>OCT+</kbd></td><td>空白ならノート／ドラムヒットを置く。ノート選択中なら詳細（Length / Velocity / Chance / Slide / Delete）を開く。</td></tr>
+    <tr><td><kbd>OCT−</kbd></td><td>詳細を閉じる／前の画面へ戻る。シンセのステップ編集中はカーソル移動にも使えます。</td></tr>
+  </tbody></table>
+
+  <h3>削除・移動・伸縮</h3>
+  <ul>
+    <li><strong>1音だけ削除：</strong><kbd>KNOB 1</kbd> で対象を選択 → <kbd>EDIT</kbd> を<strong>短く1回</strong>押す。コードは選択中のピッチだけ消え、最後の1音を消すとタイも消えます。</li>
+    <li><strong>詳細から削除：</strong>対象を選択 → <kbd>OCT+</kbd> → <strong>Delete</strong>。</li>
+    <li><strong>位置を移動：</strong><kbd>SCL</kbd> を押しながら <kbd>SELECT</kbd> または <kbd>KNOB 1</kbd>。</li>
+    <li><strong>長さを変更：</strong><kbd>ENV</kbd> を押しながら <kbd>SELECT</kbd> または <kbd>KNOB 1</kbd>。</li>
+  </ul>
+  <div class="warning"><strong>注意：</strong><kbd>EDIT</kbd> を押したまま他の操作をすると「削除タップ」として扱われません。削除は単独で短く押してください。</div>
+
+  <h2 id="record">ライブ録音と消去</h2>
+  <ul>
+    <li><strong>録音開始：</strong>対象トラックを選び、<kbd>REC</kbd>＋<kbd>PLAY</kbd>。<kbd>REC</kbd> 単独は録音待機の切替です。</li>
+    <li><strong>演奏の後追い記録（Capture）：</strong>再生中に <kbd>REC</kbd> を長押し。選択トラックで直近に弾いた内容をパターンへ書き込みます。</li>
+    <li><strong>再生しながら消去：</strong>選択トラックが<strong>録音中かつ再生中</strong>に、<kbd>EDIT</kbd> を押し続ける。再生ヘッドが通るノート、ドラム、タイを消去します。</li>
+  </ul>
+  <div class="warning"><strong>ライブ消去は通常の8段階 Undo では戻せません。</strong>必要なら先にプロジェクトを保存してください。</div>
+  <p>録音したノートも NOTES で個別選択・音程・長さ・ベロシティ編集・削除ができます。停止してから編集するのが安全です。タイミングを揃えたい場合は <kbd>SEQ</kbd> → <strong>TEMPO</strong> → <strong>QNT</strong>。OFF に戻すと元の演奏タイミングで鳴ります。</p>
+
+  <h2 id="patterns">パターン（1〜8）</h2>
+  <ul>
+    <li><strong>パターンを選ぶ：</strong><kbd>SEQ</kbd> を押しながら最初の8つの白鍵。再生中ならトラックごとにループ終端で切り替わります。</li>
+    <li><strong>一覧を開く：</strong><kbd>SEQ</kbd> → <strong>PATTERNS</strong>、または <kbd>SEQ</kbd> 長押し。</li>
+    <li><strong>パターンの複製：</strong>一覧で対象トラックのパターンを選択 → <kbd>OCT+</kbd> → <strong>Copy to…</strong> → ノブで空き先を選び <kbd>OCT+</kbd>。使用済みスロットへの上書きは確認が出ます。</li>
+    <li><strong>パターン全消去：</strong>同じシートの <strong>Delete pattern</strong>。ノートとモーションも消えます。直後なら <kbd>SAVE</kbd> 長押しで戻せます。</li>
+  </ul>
+
+  <h2 id="song">ソング構成</h2>
+  <p><kbd>SEQ</kbd> → <strong>SONG</strong>。<kbd>KNOB 1</kbd>＝セクション、<kbd>KNOB 2</kbd>＝トラック、<kbd>KNOB 3</kbd>＝そのトラックのパターン、<kbd>KNOB 4</kbd>＝繰り返し回数（1〜16）。最大16行です。</p>
+  <p><strong>Jam から曲にする：</strong>再生後のパターン切替はログに残ります。SONG ページで <kbd>REC</kbd> を長押しすると、その Jam をアレンジメントに変換します。</p>
+
+  <h2 id="sound">音色選択：SAVE → PRESETS</h2>
+  <ol>
+    <li>まず <kbd>ALGORITHM</kbd> で対象トラック（T1〜T4）を選びます。</li>
+    <li><kbd>SAVE</kbd> を押してから <kbd>PRESETS</kbd> を選び、音色ブラウザーを開きます。<strong>PRESETS ノブを回すだけでは開きません。</strong></li>
+    <li><kbd>KNOB 1</kbd> でリストを選択：各音源の Factory、Native User、一般 User、<strong>FAV</strong>、<strong>RECENT</strong>、またはカテゴリ。</li>
+    <li><kbd>KNOB 2</kbd> で音色を選択します。候補を素早く回した時は、ノブを止めた時点で読み込まれます。</li>
+  </ol>
+  <table><thead><tr><th>操作</th><th>結果</th></tr></thead><tbody>
+    <tr><td><kbd>KNOB 4</kbd></td><td>音源を切替（PROPHET / FM6 / CZ-1 / SID / DRUM）。切替直後は各音源の INIT 音色から開始。</td></tr>
+    <tr><td><kbd>SAVE</kbd> 長押し</td><td>ブラウズ前に使っていた音色へ戻る。</td></tr>
+    <tr><td><kbd>OCT+</kbd> 長押し</td><td>選択音色のシートを開く。Init sound を選べばそのトラックの音源を初期化。</td></tr>
+  </tbody></table>
+  <p>カテゴリは BASS / LEAD / PAD / KEYS / ORGAN / STRING / BRASS / WIND / PLUCK / BELL / DRUM / FX / OTHER。FAV はお気に入り、RECENT は電源投入後に開いた音色の履歴です。</p>
+
+  <h2 id="undo">取り消しと保存</h2>
+  <ul>
+    <li><strong>ノート編集を戻す：</strong><kbd>SAVE</kbd> 長押し。長押し中に <kbd>OCT−</kbd>＝Undo、<kbd>OCT+</kbd>＝Redo。最大8編集。</li>
+    <li><strong>プロジェクト保存：</strong><kbd>SAVE</kbd>＋<kbd>REC</kbd>。再生は停止して保存されます。</li>
+    <li><strong>オートセーブ：</strong>保存先スロットのあるプロジェクトは、停止して5秒無操作で自動保存。</li>
+  </ul>
+  <p class="small">出典：Melodee 1.1.0 公式 README（Note editing / Patterns and songs / Browsing sounds）。作成日：2026-10-10。</p>
+</main>
+</body>
+</html>

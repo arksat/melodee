@@ -9,9 +9,9 @@
  * Each part remembers what it drew and redraws when that changes. Included by ui_draw.c */
 #define BR_TOP_H 26                                     /* the top: rows 0 .. 25 */
 #define BR_BODY_H 178                                   /* the columns: rows 26 .. 203 */
-#define BR_SIDE_W 72                                    /* LIST: x 0 .. 71, its rule at 70 */
-#define BR_LIST_W 166                                   /* the sounds: x 72 .. 237 (a canvas: 166 x 178 fits CV_MAX) */
-#define BR_SIDE_ROWS 11u                                /* LIST rows shown */
+#define BR_SIDE_W 86                                    /* category column: +19% */
+#define BR_LIST_W (238 - BR_SIDE_W)
+#define BR_SIDE_ROWS 7u                                 /* 24 px rows for the 16 px category font */
 
 static struct { uint32_t top, side, list, foot; } brv;  /* what each part drew */
 
@@ -67,24 +67,24 @@ static void browser_side(void)
     if (!ui.force && sig == brv.side)
         return;
     brv.side = sig;
-    first = (uint32_t)clamp((int32_t)m - 5, 0, (int32_t)(LM_N - BR_SIDE_ROWS));
+    first = (uint32_t)clamp((int32_t)m - 3, 0, (int32_t)(LM_N - BR_SIDE_ROWS));
     cv_begin(BR_SIDE_W, BR_BODY_H, T_BG);
     for (r = 0; r < BR_SIDE_ROWS && first + r < LM_N; r++) {
         uint32_t i = first + r;
-        int32_t y = 3 + (int32_t)r * 16, x = 9;
+        int32_t y = 3 + (int32_t)r * 24, x = 9;
         int sel = i == m;
         uint16_t bg = sel ? T_LIFT : T_BG, c = sel ? T_TEXT : i < LM_CAT ? T_MID : T_SEC;
         if (sel) {
-            cv_rect(0, y, 66, 15, T_LIFT);
-            cv_rect(0, y, 3, 15, T_THEME);
+            cv_rect(0, y, BR_SIDE_W - 6, 22, T_LIFT);
+            cv_rect(0, y, 3, 22, T_THEME);
         }
         if (i == LM_FAV) {
-            cv_icon_on(x, y + 1, 12, ICON_X_STAR, sel ? T_THEME : c, bg);
+            cv_icon_on(x, y + 4, 12, ICON_X_STAR, sel ? T_THEME : c, bg);
             x += 15;
         }
-        cv_text_on(x, y, &AF_S, browser_list_name(i), c, bg);
+        cv_text_on(x, y, &AF_B, browser_list_name(i), c, bg);
     }
-    cv_rect(70, 2, 1, BR_BODY_H - 2, T_LINE);
+    cv_rect(BR_SIDE_W - 2, 2, 1, BR_BODY_H - 2, T_LINE);
     cv_blit(0, BR_TOP_H);
 }
 
@@ -92,7 +92,7 @@ static void browser_side(void)
  * acceleration's badge while a fast turn browses. The loaded sound out of the list: the list's first, outlined in line */
 static void browser_list(uint32_t cur, uint32_t total)
 {
-    static const uint8_t ROW_Y[6] = {15, 35, 0, 113, 133, 153};   /* rows -2 -1 (the card) +1 +2 +3 */
+    static const uint8_t ROW_Y[6] = {6, 31, 0, 108, 132, 156};   /* 16 px labels, clear of the selected card */
     uint32_t m = list_mode(), out = cur >= total, at = out ? 0u : cur, k, src, sig;
     int pending = browse_pending(), badge = pending && brw.x > 1u;
     int32_t r;
@@ -104,8 +104,8 @@ static void browser_list(uint32_t cur, uint32_t total)
     brv.list = sig;
     cv_begin(BR_LIST_W, BR_BODY_H, T_BG);
     if (!total) {
-        cv_text_c(80, 70, &AF_S, m == LM_FAV ? "No favourites" : m == LM_RECENT ? "Nothing loaded yet" : "No sounds",
-                  T_MID, T_BG);
+        cv_free_text(8, 70, &AF_S, m == LM_FAV ? "No favourites" : m == LM_RECENT ? "Nothing loaded yet" : "No sounds",
+                     T_MID, T_BG, BR_LIST_W - 16);
         cv_blit(BR_SIDE_W, BR_TOP_H);
         return;
     }
@@ -117,7 +117,7 @@ static void browser_list(uint32_t cur, uint32_t total)
         entry_label(src, k, tag, nm);
         if (src == ENGI_PROPHET)                        /* (the Prophet's own name, whole) */
             str_cpy(nm, ENGINES[ENGI_PROPHET]->presets[k].name, sizeof nm);
-        cv_free_text(8, ROW_Y[r + 2], &AF_S, nm[0] ? nm : tag, r == -1 || r == 1 ? T_MID : T_DIM, T_BG, 150);
+        cv_free_text(8, ROW_Y[r + 2], &AF_B, nm[0] ? nm : tag, r == -1 || r == 1 ? T_MID : T_DIM, T_BG, BR_LIST_W - 16);
     }
     {   /* the card */
         uint16_t ol = out ? T_LINE : T_THEME;
@@ -128,25 +128,25 @@ static void browser_list(uint32_t cur, uint32_t total)
         if (src == ENGI_PROPHET)
             str_cpy(nm, ENGINES[ENGI_PROPHET]->presets[k].name, sizeof nm);
         e = src_engine(src, k);
-        cv_rrect(4, 58, 150, 46, 6, ol, T_BG);
-        cv_rrect(5, 59, 148, 44, 5, T_LIFT, ol);
-        cv_free_text(12, 63, &AF_M, nm[0] ? nm : tag, out ? T_MID : T_TEXT, T_LIFT, 136);
+        cv_rrect(4, 58, BR_LIST_W - 16, 46, 6, ol, T_BG);
+        cv_rrect(5, 59, BR_LIST_W - 18, 44, 5, T_LIFT, ol);
+        cv_free_text(12, 63, &AF_M, nm[0] ? nm : tag, out ? T_MID : T_TEXT, T_LIFT, BR_LIST_W - 30);
         cv_text_on(12, 86, &AF_X, ENGINES[eng_idx(e)]->name, out ? T_MID : T_THEME, T_LIFT);
         fmt_int(pl, (int32_t)at + 1);
         str_cpy(pl + str_len(pl), " / ", 4);
         fmt_int(pl + str_len(pl), (int32_t)total);
-        cv_text_r(148, 86, &AF_X, pl, T_MID, T_LIFT);
+        cv_text_r(BR_LIST_W - 18, 86, &AF_X, pl, T_MID, T_LIFT);
     }
-    cv_rect(161, 4, 2, BR_BODY_H - 4, T_LINE);         /* the scrollbar: the place */
+    cv_rect(BR_LIST_W - 5, 4, 2, BR_BODY_H - 4, T_LINE); /* the scrollbar: the place */
     {
         int32_t span = BR_BODY_H - 8 - 20, ty = 4 + (total > 1u ? (int32_t)at * span / (int32_t)(total - 1u) : 0);
-        cv_rrect(160, ty, 4, 20, 2, out ? T_MID : T_THEME, T_BG);
+        cv_rrect(BR_LIST_W - 6, ty, 4, 20, 2, out ? T_MID : T_THEME, T_BG);
     }
     if (badge) {                                        /* a fast turn: its acceleration */
         char b[4] = {'x', 0, 0, 0};
         fmt_int(b + 1, brw.x);
-        cv_rrect(124, 4, 30, 15, 4, T_THEME, T_BG);
-        cv_text_c(139, 6, &AF_X, b, T_INK, T_THEME);
+        cv_rrect(BR_LIST_W - 42, 4, 30, 15, 4, T_THEME, T_BG);
+        cv_text_c(BR_LIST_W - 27, 6, &AF_X, b, T_INK, T_THEME);
     }
     cv_blit(BR_SIDE_W, BR_TOP_H);
 }

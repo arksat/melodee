@@ -43,7 +43,7 @@ CODE = {0x2026: 0x85}                  # characters outside Latin-1 -> their one
 PHASES, PHASES_L = 4, 2                # horizontal phases per glyph (aa_raster.raster_font): S M, L
 # faces stored Huffman-coded (--huff): M and L. S, the most drawn and the least compressible (-15 %), stays
 # 2 px per byte, so the labels draw at full speed
-HUFF = [("M", "L")]
+HUFF = [("M", "L", "B", "T")]
 # L draws "Melodee", the UPDATE MODE countdown digit, the HOME notes / chord roots, the calibration's control names
 # (panel.c B_NAME / E_NAME), NAME's name and NEW SONG's key (R6): every letter, the digits and the name's signs; the
 # space as its range and the rest as extras (ui_test.c checks that every L string is covered)
@@ -55,6 +55,8 @@ def preset(name):
         v = str(FONTS.parent / "assets" / "fonts" / "Rubik[wght].ttf")       # SIL OFL 1.1, Google Fonts
         return [("X", v + "@500", 9, (32, 126), EXTRAS, 0.0, PHASES),     # the redesign's labels (docs/design)
                 ("S", v + "@400", 11, (32, 126), EXTRAS, 0.0, PHASES),
+                ("B", v + "@400", 16, (32, 126), EXTRAS, 0.0, 1),  # browser: compact integer-position glyphs
+                ("T", v + "@400", 13, (32, 126), EXTRAS, 0.0, 1),  # Stage sound names (+18%)
                 ("M", v + "@500", 15, (32, 126), EXTRAS, 0.0, PHASES),
                 ("L", v + "@500", 30, (32, 32), [ord(c) for c in L_CHARS[1:]], 0.0, PHASES_L)]
     if name == "inter-tight":
@@ -170,7 +172,9 @@ def huff_unpack(hc, data, n):
 def emit(face, tracking, gamma, kern_min):
     name, font, px, (first, last), extras, ftrack, phases = face
     chars = [chr(c) for c in range(first, last + 1)] + [chr(c) for c in extras]
-    r = ar.raster_font(font, px, chars, tracking if ftrack is None else ftrack, gamma, True, kern_min, phases)
+    # Additional large labels use one bitmap per glyph and no pair table to fit FM-1 flash.
+    r = ar.raster_font(font, px, chars, tracking if ftrack is None else ftrack, gamma, True,
+                       32768 if name in ("B", "T") else kern_min, phases)
     data, table, lines = bytearray(), [], []
     for ch in chars:
         adv16, ph = r["glyphs"][ch]

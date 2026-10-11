@@ -287,20 +287,28 @@ static void stage_entry(uint32_t k, uint32_t *src, uint32_t *kk)
 /* a name in two lines of w px: the first ends at the last space, '.' or '-' that fits (one long word: cut), the rest below */
 static void stage_two_lines(const char *s, char *a, char *b, int32_t w)
 {
-    uint32_t i, cut = 0;
-    for (i = 0; s[i] && i < 15u; i++)                   /* (cut: the first line's length; a space goes) */
-        if (s[i] == ' ' || s[i] == '.' || s[i] == '-') {
-            uint32_t n = i + (s[i] != ' ');
-            str_cpy(a, s, n + 1u);
-            if (n && text_w(&AF_S, a) <= w) cut = n;
-        }
-    if (!cut || text_w(&AF_S, s) <= w) {
+    uint32_t i, cut = 0, fit = 0;
+    if (text_w(&AF_T, s) <= w) {
         str_cpy(a, s, 16);
         b[0] = 0;
         return;
     }
+    /* Prefer word boundaries; split long words rather than dropping their remainder. */
+    for (i = 1; s[i - 1] && i <= 15u; i++) {
+        str_cpy(a, s, i + 1u);
+        if (text_w(&AF_T, a) > w) break;
+        fit = i;
+    }
+    for (i = 0; s[i] && i < 15u; i++)                   /* (cut: the first line's length; a space goes) */
+        if (s[i] == ' ' || s[i] == '.' || s[i] == '-') {
+            uint32_t n = i + (s[i] != ' ');
+            str_cpy(a, s, n + 1u);
+            if (n && text_w(&AF_T, a) <= w) cut = n;
+        }
+    if (!cut) cut = fit ? fit : 1u;
     str_cpy(a, s, cut + 1u);
-    str_cpy(b, s + cut + (s[cut] == ' '), 16);
+    while (s[cut] == ' ') cut++;
+    str_cpy(b, s + cut, 16);
 }
 /* column k's 4 x 4 steps (the bar playing): hits in the track's colour, the playhead larger in text, the rest in line;
  * a canvas of 50 x ST_GRID_H at the column's (2, ST_GRID_Y), clear of the level's ring under it */
@@ -370,17 +378,17 @@ static void stage_col(uint32_t k)
         if (arm)                                        /* armed: a REC dot */
             cv_circle(47, 10, 6, T_REC, bg);
         stage_two_lines(nm, l1, l2, CARD_W - 10);
-        cv_free_text(6, 20, &AF_S, l1, pending ? T_ACCENT : mute ? T_DIM : T_TEXT, bg, CARD_W - 8);
+        cv_free_text(6, 18, &AF_T, l1, pending ? T_ACCENT : mute ? T_DIM : T_TEXT, bg, CARD_W - 10);
         if (l2[0])
-            cv_free_text(6, 34, &AF_S, l2, pending ? T_ACCENT : mute ? T_DIM : T_TEXT, bg, CARD_W - 8);
+            cv_free_text(6, 35, &AF_T, l2, pending ? T_ACCENT : mute ? T_DIM : T_TEXT, bg, CARD_W - 10);
     }
-    cv_text_fit(6, 49, &AF_X, en, T_MID, bg, CARD_W - 8);
-    cv_rrect(6, 64, 22, 14, 4, tc, bg);                 /* the pattern playing */
-    cv_text_c(17, 65, &AF_X, chip, T_INK, tc);
+    cv_text_fit(6, 52, &AF_X, en, T_MID, bg, CARD_W - 8);
+    cv_rrect(6, 66, 22, 14, 4, tc, bg);                 /* the pattern playing */
+    cv_text_c(17, 67, &AF_X, chip, T_INK, tc);
     if (next) {                                         /* the next one, waiting for the bar: dashed */
         char n2[3] = {'P', (char)('0' + next), 0};
-        cv_dashed(31, 64, 20, 14, 3, tc);
-        cv_text_c(41, 65, &AF_X, n2, tc, bg);
+        cv_dashed(31, 66, 20, 14, 3, tc);
+        cv_text_c(41, 67, &AF_X, n2, tc, bg);
     }
     {   /* the steps, as stage_grid draws them on their own canvas (2 px in, from row ST_GRID_Y) */
         int32_t ox = 2;
