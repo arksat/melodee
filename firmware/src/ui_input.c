@@ -1911,10 +1911,18 @@ static void ui_input(void)
     if (s) step_edit_combo();
     if (s && !ui.home && cur_page()->graph == GR_SCALE_PICKER) {
         scale_picker_step(list_accel(EN_PRESET, s, scale_picker_count(), 0));
-    } else if (s && (ui.home || cur_page()->graph == GR_BROWSE)) {
-        /* PRESETS browses the selected part's sounds (all engines, then user presets) on HOME and the
-         * PRESETS page only (never the steps); elsewhere (TRACKS too, where one records) a stray turn
-         * would throw away the sound being edited */
+    } else if (s && ui.home) {
+        /* On Stage, PRESETS opens the selected part's sound browser. Consume this first turn so a
+         * browse request cannot accidentally load another sound during performance. */
+        uint32_t p = page_titled("PRESETS");
+        if (p < NPAGES) {
+            ui.home = 0;
+            ui.page = (uint8_t)p;
+            ui.fam_last[FAM_SAVE] = ui.page;
+            page_entered();
+        }
+    } else if (s && !ui.home && cur_page()->graph == GR_BROWSE) {
+        /* On the browser page, PRESETS still browses the selected part's sounds. */
         browse_turn(EN_PRESET, s);                       /* past the factory ones: user presets */
     } else if (s && !ui.home && cur_page()->graph == GR_ROLL && !grid_on()) {
         ui.note_zoom = (uint8_t)clamp((int32_t)ui.note_zoom + s, 0, 4);

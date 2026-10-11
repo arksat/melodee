@@ -4766,6 +4766,7 @@ static int test_prophet_pages(void)
     undo_swap();bad+=check("undo after native INIT restores opaque bytes",p5_patch_of(TSEL)->raw[97]==255);
     return bad;
 }
+#ifndef UI_TEST_NO_MAIN
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -4836,4 +4837,5 @@ int main(void)
     printf(bad ? "ui: %d FAILED\n" : "ui: all passed\n", bad);
     return bad ? 1 : 0;
 }
+#endif
 #endif
